@@ -28,6 +28,7 @@ DEFAULTS: dict = {
     "extract_pages": "",
     "extract_remove": False,
     "compress": "strong",
+    "cad_scale": 1,
     "auto_update": True,
     "last_update_check": 0.0,
 }

@@ -73,6 +73,7 @@ RESIZE = {"original": None, "large": 2560, "medium": 1920, "small": 1280, "tiny"
 FILESIZE = {"none": None, "200kb": 200 * 1024, "500kb": 500 * 1024, "1mb": 1024 ** 2,
             "2mb": 2 * 1024 ** 2, "5mb": 5 * 1024 ** 2}
 ROTATIONS = {"right": 90, "half": 180, "left": 270}
+CAD_SCALES = [1, 20, 50, 100, 200, 500, 1000]
 
 
 def F(size: int, weight: str = "normal") -> ctk.CTkFont:
@@ -90,6 +91,30 @@ def human_size(n: float) -> str:
 
 def shorten(name: str, limit: int = 44) -> str:
     return name if len(name) <= limit else name[: limit - 16] + "…" + name[-15:]
+
+
+def color_titlebar(window, mode: str | None = None) -> None:
+    """Gives the Windows title bar the light or dark colour of the theme.
+
+    CustomTkinter normally does this by hiding and re-showing every window, which
+    can leave a dialog invisible while it still blocks the app. We switch that
+    off (see main) and only repaint the frame instead.
+    """
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        window.update_idletasks()
+        hwnd = ctypes.windll.user32.GetParent(window.winfo_id())
+        value = ctypes.c_int(1 if (mode or ctk.get_appearance_mode()).lower() == "dark" else 0)
+        for attribute in (20, 19):  # DWMWA_USE_IMMERSIVE_DARK_MODE (new, then old Windows 10)
+            if ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    hwnd, attribute, ctypes.byref(value), ctypes.sizeof(value)) == 0:
+                break
+        # repaint the frame: NOSIZE | NOMOVE | NOZORDER | NOACTIVATE | FRAMECHANGED
+        ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020)
+    except Exception:
+        pass
 
 
 BASES = (ctk.CTk, TkinterDnD.DnDWrapper) if DND else (ctk.CTk,)
@@ -130,6 +155,7 @@ class Shift(*BASES):
         self.protocol("WM_DELETE_WINDOW", self._quit)
         if sys.platform == "win32":
             self.after(300, self._set_icon)
+            self.after(50, lambda: color_titlebar(self))
 
         self._build()
         self._refresh()
@@ -139,6 +165,10 @@ class Shift(*BASES):
         if (settings["auto_update"] and updater.configured()
                 and time.time() - settings["last_update_check"] > 20 * 3600):
             self.after(3000, lambda: self._check_updates(manual=False))
+
+    def _set_appearance_mode(self, mode_string):
+        super()._set_appearance_mode(mode_string)
+        self.after(20, lambda: color_titlebar(self, mode_string))
 
     def _set_icon(self, window=None):
         try:
@@ -449,6 +479,15 @@ class Shift(*BASES):
         self.compress_hint.pack(fill="x", pady=(4, 0))
         self._compress_hint()
 
+        # PDF to DXF/DWG
+        self.box_cad = ctk.CTkFrame(o, fg_color="transparent", height=1)
+        self._label(self.box_cad, "opt.cad_scale").pack(fill="x")
+        self.cad_labels = {n: (t("cad.scale_paper") if n == 1 else f"1:{n}") for n in CAD_SCALES}
+        self.menu_cad = self._menu(self.box_cad, list(self.cad_labels.values()))
+        self.menu_cad.set(self.cad_labels.get(s["cad_scale"], self.cad_labels[1]))
+        self.menu_cad.pack(fill="x", pady=(6, 0))
+        self._label(self.box_cad, "cad.hint", muted=True, size=11).pack(fill="x", pady=(4, 0))
+
         self.no_options = self._label(o, "opt.none", muted=True, size=12)
 
         # --- save to
@@ -468,7 +507,7 @@ class Shift(*BASES):
                           self.slider_quality, self.menu_filesize, self.seg_dpi, self.seg_split,
                           self.entry_split_n, self.entry_split_ranges, self.seg_rotate,
                           self.entry_rotate, self.entry_extract, self.sw_remove,
-                          self.seg_compress, self.seg_output]
+                          self.seg_compress, self.seg_output, self.menu_cad]
         self._toggle_custom()
         self._toggle_split()
 
@@ -804,6 +843,8 @@ class Shift(*BASES):
                 show += [self.box_resize, self.box_quality, self.box_filesize]
                 if pdfs:
                     show.append(self.box_dpi)
+            elif a in ("dxf", "dwg"):
+                show.append(self.box_cad)
             elif a in ("png", "tiff", "bmp", "gif"):
                 if images or pdfs:
                     show.append(self.box_resize)
@@ -811,7 +852,7 @@ class Shift(*BASES):
                     show.append(self.box_dpi)
         boxes = [self.sw_merge, self.sw_a4, self.box_resize, self.box_quality, self.box_filesize,
                  self.box_dpi, self.box_split, self.box_rotate, self.box_extract,
-                 self.box_compress, self.no_options]
+                 self.box_compress, self.box_cad, self.no_options]
         for w in boxes:
             w.pack_forget()
         for w in show or [self.no_options]:
@@ -904,6 +945,7 @@ class Shift(*BASES):
             split_n = 2
         rotate = self._code(self.rotate_labels, self.seg_rotate.get()) or "right"
         compress = self._code(self.compress_labels, self.seg_compress.get()) or "strong"
+        cad_scale = self._code(self.cad_labels, self.menu_cad.get()) or 1
 
         # quick syntax check of page numbers before we start
         checks = {"tool:split": self.entry_split_ranges.get() if split_mode == "ranges" else "",
@@ -931,6 +973,7 @@ class Shift(*BASES):
             "rotate": ROTATIONS[rotate], "rotate_pages": self.entry_rotate.get().strip(),
             "extract_pages": self.entry_extract.get().strip(),
             "extract_remove": bool(self.sw_remove.get()), "compress": compress,
+            "cad_scale": cad_scale,
             "last_action": self.action,
         })
         s.save()
@@ -941,7 +984,7 @@ class Shift(*BASES):
             split_mode=split_mode, split_n=split_n, split_ranges=s["split_ranges"],
             rotate=s["rotate"], rotate_pages=s["rotate_pages"],
             extract_pages=s["extract_pages"], extract_remove=s["extract_remove"],
-            compress=compress)
+            compress=compress, cad_scale=cad_scale)
 
     def _open_settings(self):
         if self.settings_window and self.settings_window.winfo_exists():
@@ -971,6 +1014,10 @@ class Shift(*BASES):
     def _start(self):
         action = self.action
         if self.busy or not action or not self.order:
+            return
+        if action == "dwg" and not engine.find_oda_converter():
+            if messagebox.askyesno(t("msg.oda_title"), t("msg.oda_missing")):
+                webbrowser.open(engine.ODA_DOWNLOAD)
             return
         opt = self._read_options()
         if opt is None:
@@ -1157,6 +1204,17 @@ class Shift(*BASES):
     def _quit(self):
         if self.busy and not messagebox.askyesno(t("msg.busy_title"), t("msg.busy")):
             return
+        try:
+            grab = self.grab_current()
+            if grab is not None:
+                grab.grab_release()
+        except Exception:
+            pass
+        if self.settings_window is not None:
+            try:
+                self.settings_window.destroy()
+            except Exception:
+                pass
         self._save_window()
         self.destroy()
 
@@ -1174,6 +1232,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self.after(150, self._bring_up)
         if sys.platform == "win32":
             self.after(300, lambda: app._set_icon(self))
+            self.after(50, lambda: color_titlebar(self))
         self.protocol("WM_DELETE_WINDOW", self._close)
 
         p = ctk.CTkFrame(self, fg_color="transparent")
@@ -1217,11 +1276,15 @@ class SettingsWindow(ctk.CTkToplevel):
                       fg_color=ACCENT, hover_color=ACCENT_HOVER, text_color=ON_ACCENT,
                       font=F(13, "bold"), command=self._close).pack(side="bottom", fill="x")
 
+    def _set_appearance_mode(self, mode_string):
+        super()._set_appearance_mode(mode_string)
+        self.after(20, lambda: color_titlebar(self, mode_string))
+
     def _bring_up(self):
+        # deliberately no grab_set(): a blocking dialog can lock up the whole app
         try:
             self.lift()
             self.focus_force()
-            self.grab_set()
         except Exception:
             pass
 
@@ -1230,6 +1293,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self.app.settings["theme"] = code
         self.app.settings.save()
         ctk.set_appearance_mode(code)
+        self.after(150, self._bring_up)
 
     def _auto_update(self):
         self.app.settings["auto_update"] = bool(self.sw_auto.get())
@@ -1246,10 +1310,6 @@ class SettingsWindow(ctk.CTkToplevel):
     def _close(self):
         code = Shift._code(self.languages, self.menu_language.get()) or "auto"
         changed = code != self.app.settings["language"]
-        try:
-            self.grab_release()
-        except Exception:
-            pass
         self.destroy()
         self.app.settings_window = None
         if changed:
@@ -1267,6 +1327,9 @@ def main():
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Shift.FileConverter")
         except Exception:
             pass
+    # see color_titlebar(): never hide and re-show windows on a theme change
+    ctk.CTk._deactivate_windows_window_header_manipulation = True
+    ctk.CTkToplevel._deactivate_windows_window_header_manipulation = True
     settings = Settings()
     i18n.setup(settings["language"])
     ctk.set_appearance_mode(settings["theme"])

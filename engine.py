@@ -61,7 +61,7 @@ CATEGORIES: dict[str, tuple[set[str], list[str]]] = {
     "image": ({"jpg", "jpeg", "png", "bmp", "gif", "tif", "tiff", "webp", "heic", "heif", "ico"},
               ["pdf", "jpg", "png", "webp", "tiff", "bmp", "gif", "ico"]),
     "pdf": ({"pdf"},
-            ["pdf", "docx", "jpg", "png", "tiff", "txt"]),
+            ["pdf", "docx", "jpg", "png", "tiff", "txt", "dxf", "dwg"]),
     "document": ({"doc", "docx", "rtf", "odt", "txt", "htm", "html"},
                  ["pdf", "docx", "doc", "rtf", "odt", "txt", "html"]),
     "spreadsheet": ({"xls", "xlsx", "xlsm", "csv", "ods"},
@@ -118,6 +118,7 @@ class Options:
     extract_pages: str = ""
     extract_remove: bool = False
     compress: str = "strong"           # light | strong
+    cad_scale: int = 1                 # DXF/DWG: drawing scale 1:N (1 = paper size in mm)
 
 
 def unique_path(p: Path) -> Path:
@@ -507,6 +508,215 @@ def merge_pdfs(paths: list[Path], dest: Path) -> None:
 
 
 # --------------------------------------------------------------------------
+# PDF to CAD (DXF, and DWG through the free ODA File Converter)
+# --------------------------------------------------------------------------
+PT_TO_MM = 25.4 / 72
+LINEWEIGHTS = [0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100,
+               106, 120, 140, 158, 200, 211]  # valid DXF lineweights (1/100 mm)
+ODA_DOWNLOAD = "https://www.opendesign.com/guestfiles/oda_file_converter"
+
+
+def _true_color(rgb) -> int | None:
+    if not rgb:
+        return None
+    r, g, b = (max(0, min(255, round(c * 255))) for c in rgb[:3])
+    return (r << 16) | (g << 8) | b
+
+
+def _lineweight(width_pt: float | None) -> int:
+    if not width_pt:
+        return 0
+    target = width_pt * PT_TO_MM * 100
+    return min(LINEWEIGHTS, key=lambda w: abs(w - target))
+
+
+def _bezier_points(p0, p1, p2, p3, steps: int = 12):
+    for i in range(1, steps + 1):
+        t = i / steps
+        mt = 1 - t
+        yield (mt ** 3 * p0[0] + 3 * mt ** 2 * t * p1[0] + 3 * mt * t ** 2 * p2[0] + t ** 3 * p3[0],
+               mt ** 3 * p0[1] + 3 * mt ** 2 * t * p1[1] + 3 * mt * t ** 2 * p2[1] + t ** 3 * p3[1])
+
+
+def _path_runs(items, to_xy) -> list[list[tuple[float, float]]]:
+    """Turns PyMuPDF drawing items into connected point lists (in CAD coordinates)."""
+    runs: list[list[tuple[float, float]]] = []
+    current: list[tuple[float, float]] = []
+
+    def start(point):
+        nonlocal current
+        if current and abs(current[-1][0] - point[0]) < 1e-6 and abs(current[-1][1] - point[1]) < 1e-6:
+            return
+        if len(current) > 1:
+            runs.append(current)
+        current = [point]
+
+    for item in items:
+        kind = item[0]
+        if kind == "l":
+            a, b = to_xy(item[1]), to_xy(item[2])
+            start(a)
+            current.append(b)
+        elif kind == "c":
+            pts = [to_xy(p) for p in item[1:5]]
+            start(pts[0])
+            current.extend(_bezier_points(*pts))
+        elif kind == "re":
+            r = item[1]
+            corners = [to_xy(fitz.Point(r.x0, r.y0)), to_xy(fitz.Point(r.x1, r.y0)),
+                       to_xy(fitz.Point(r.x1, r.y1)), to_xy(fitz.Point(r.x0, r.y1))]
+            if len(current) > 1:
+                runs.append(current)
+            runs.append(corners + [corners[0]])
+            current = []
+        elif kind == "qu":
+            q = item[1]
+            corners = [to_xy(q.ul), to_xy(q.ur), to_xy(q.lr), to_xy(q.ll)]
+            if len(current) > 1:
+                runs.append(current)
+            runs.append(corners + [corners[0]])
+            current = []
+    if len(current) > 1:
+        runs.append(current)
+    return runs
+
+
+def _page_to_dxf(page, dest: Path, opt: Options) -> None:
+    import ezdxf
+    from math import atan2, degrees
+
+    k = PT_TO_MM * max(1, opt.cad_scale)
+    rotate = page.rotation_matrix
+    height = page.rect.height
+
+    def to_xy(p) -> tuple[float, float]:
+        q = fitz.Point(p) * rotate
+        return q.x * k, (height - q.y) * k
+
+    drawings = page.get_drawings()
+    text = page.get_text("dict")
+    spans = [(line, span) for block in text.get("blocks", []) if block.get("type") == 0
+             for line in block.get("lines", []) for span in line.get("spans", [])
+             if span.get("text", "").strip()]
+    if not drawings and not spans:
+        raise ShiftError("err.pdf_no_vectors")
+
+    doc = ezdxf.new("R2018", setup=True)
+    doc.units = ezdxf.units.MM
+    for name, color in (("PDF_LINES", 7), ("PDF_FILLS", 8), ("PDF_TEXT", 7)):
+        doc.layers.add(name, color=color)
+    msp = doc.modelspace()
+
+    for d in drawings:
+        runs = _path_runs(d.get("items", []), to_xy)
+        if not runs:
+            continue
+        kind = d.get("type") or "s"
+        closed = bool(d.get("closePath"))
+        if "f" in kind and d.get("fill"):
+            hatch = msp.add_hatch(dxfattribs={"layer": "PDF_FILLS"})
+            hatch.set_solid_fill(rgb=None)
+            hatch.dxf.true_color = _true_color(d["fill"])
+            for run in runs:
+                hatch.paths.add_polyline_path(run, is_closed=True)
+        if "s" in kind and d.get("color") is not None:
+            attribs = {"layer": "PDF_LINES", "lineweight": _lineweight(d.get("width"))}
+            color = _true_color(d.get("color"))
+            for run in runs:
+                is_closed = closed or (len(run) > 2 and run[0] == run[-1])
+                points = run[:-1] if is_closed and run[0] == run[-1] else run
+                pl = msp.add_lwpolyline(points, close=is_closed, dxfattribs=attribs)
+                if color is not None:
+                    pl.dxf.true_color = color
+
+    for line, span in spans:
+        direction = fitz.Point(line.get("dir", (1, 0))) * fitz.Matrix(rotate.a, rotate.b, rotate.c, rotate.d, 0, 0)
+        entity = msp.add_text(span["text"], dxfattribs={
+            "layer": "PDF_TEXT",
+            "height": max(0.01, span.get("size", 10) * 0.7 * k),
+            "rotation": degrees(atan2(-direction.y, direction.x)),
+        })
+        entity.set_placement(to_xy(span["origin"]))
+        color = span.get("color")
+        if isinstance(color, int) and color:
+            entity.dxf.true_color = color
+
+    doc.saveas(dest)
+
+
+def find_oda_converter() -> str | None:
+    import glob
+    found = shutil.which("ODAFileConverter")
+    if found:
+        return found
+    for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)")):
+        if base:
+            hits = sorted(glob.glob(os.path.join(base, "ODA", "ODAFileConverter*", "ODAFileConverter.exe")))
+            if hits:
+                return hits[-1]  # newest version
+    return None
+
+
+def dxf_to_dwg(dxf_files: list[Path]) -> list[Path]:
+    """Converts DXF files to DWG (AutoCAD 2018) next to them, then removes the DXF."""
+    oda = find_oda_converter()
+    if not oda:
+        raise ShiftError("err.needs_oda", url=ODA_DOWNLOAD)
+    results = []
+    with tempfile.TemporaryDirectory(prefix="shift_oda_") as tmp:
+        src_dir, out_dir = Path(tmp, "in"), Path(tmp, "out")
+        src_dir.mkdir()
+        out_dir.mkdir()
+        for f in dxf_files:
+            shutil.copy2(f, src_dir / f.name)
+        subprocess.run([oda, str(src_dir), str(out_dir), "ACAD2018", "DWG", "0", "1", "*.DXF"],
+                       capture_output=True, timeout=900, creationflags=NO_WINDOW)
+        for f in dxf_files:
+            made = out_dir / (f.stem + ".dwg")
+            if not made.exists():
+                raise ShiftError("err.oda_failed")
+            dest = unique_path(f.with_suffix(".dwg"))
+            shutil.move(str(made), str(dest))
+            f.unlink()
+            results.append(dest)
+    return results
+
+
+def pdf_to_cad(src: Path, ext: str, outdir: Path, opt: Options) -> list[Path]:
+    if ext == "dwg" and not find_oda_converter():
+        raise ShiftError("err.needs_oda", url=ODA_DOWNLOAD)
+    doc = open_pdf(src)
+    try:
+        n = doc.page_count
+        if n == 1:
+            folder = outdir
+            names = [src.stem]
+        else:
+            folder = unique_dir(outdir / f"{src.stem} - {t('name.pages')}")
+            folder.mkdir(parents=True)
+            digits = len(str(n))
+            names = [f"{src.stem} - {t('name.page')} {i:0{digits}d}" for i in range(1, n + 1)]
+        made: list[Path] = []
+        skipped = 0
+        for page, name in zip(doc, names):
+            dest = unique_path(folder / f"{name}.dxf")
+            try:
+                _page_to_dxf(page, dest, opt)
+                made.append(dest)
+            except ShiftError:
+                if n == 1:
+                    raise
+                skipped += 1
+        if not made:
+            raise ShiftError("err.pdf_no_vectors")
+    finally:
+        doc.close()
+    if ext == "dwg":
+        made = dxf_to_dwg(made)
+    return [folder] if n > 1 else made
+
+
+# --------------------------------------------------------------------------
 # Video and audio (ffmpeg)
 # --------------------------------------------------------------------------
 def ffmpeg_path() -> str:
@@ -737,6 +947,8 @@ def convert(src: Path, ext: str, outdir: Path, opt: Options, office: Office) -> 
             return pdf_to_images(src, ext, outdir, opt)
         if ext == "pdf":
             return pdf_compress(src, outdir, Options(**{**opt.__dict__, "compress": "light"}))
+        if ext in ("dxf", "dwg"):
+            return pdf_to_cad(src, ext, outdir, opt)
         dest = unique_path(outdir / f"{src.stem}.{ext}")
         if ext == "txt":
             pdf_to_text(src, dest)

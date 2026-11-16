@@ -1,23 +1,19 @@
 {
   "_language": "Nederlands",
   "_decimal": ",",
-
   "app.tagline": "zet elk bestand om",
   "header.local": "Alles blijft op deze computer",
-
   "drop.title": "Sleep je bestanden hierheen",
   "drop.title_click": "Klik hier om bestanden te kiezen",
   "drop.subtitle": "of klik om ze te kiezen",
   "drop.subtitle_click": "je kunt er meerdere tegelijk kiezen",
   "drop.types": "Afbeeldingen  ·  PDF  ·  Word  ·  Excel  ·  PowerPoint  ·  Video  ·  Audio",
-
   "list.count.one": "{n} bestand",
   "list.count.other": "{n} bestanden",
   "list.add_files": "Bestanden",
   "list.add_folder": "Map toevoegen",
   "list.sort": "Sorteer A–Z",
   "list.clear": "Alles wissen",
-
   "cat.image": "Afbeelding",
   "cat.pdf": "PDF",
   "cat.document": "Document",
@@ -25,15 +21,12 @@
   "cat.presentation": "Presentatie",
   "cat.video": "Video",
   "cat.audio": "Audio",
-
   "section.convert_to": "Omzetten naar",
   "section.pdf_tools": "PDF-gereedschap",
   "section.options": "Opties",
   "section.save_to": "Opslaan in",
-
   "convert.add_first": "Voeg eerst bestanden toe.",
   "convert.no_common": "Deze bestanden hebben geen gemeenschappelijk doelformaat. Zet ze in aparte rondes om.",
-
   "fmt.pdf": "PDF-document (.pdf)",
   "fmt.docx": "Word-document (.docx)",
   "fmt.doc": "Word 97-2003 (.doc)",
@@ -66,7 +59,8 @@
   "fmt.aac": "AAC-audio (.aac)",
   "fmt.flac": "FLAC-audio (.flac)",
   "fmt.ogg": "OGG-audio (.ogg)",
-
+  "fmt.dxf": "CAD-tekening (.dxf) – opent in AutoCAD, BricsCAD, DraftSight, …",
+  "fmt.dwg": "AutoCAD-tekening (.dwg) – via de gratis ODA File Converter",
   "tool.split": "Splitsen",
   "tool.rotate": "Draaien",
   "tool.extract": "Pagina's kiezen",
@@ -75,7 +69,6 @@
   "tool.rotate.desc": "Draai alle pagina's of alleen de pagina's die je kiest.",
   "tool.extract.desc": "Houd alleen de pagina's die je nodig hebt, of verwijder pagina's.",
   "tool.compress.desc": "Maak PDF's kleiner, voor e-mail of uploaden.",
-
   "opt.none": "Geen extra opties voor deze keuze.",
   "opt.merge": "Samenvoegen tot één PDF",
   "opt.a4": "Afbeeldingen op A4-pagina's",
@@ -84,50 +77,41 @@
   "opt.quality": "Kwaliteit",
   "opt.max_filesize": "Maximale bestandsgrootte",
   "opt.dpi": "Scherpte van de pagina-afbeeldingen",
-
   "size.original": "Originele afmeting",
   "size.large": "Groot (2560 px)",
   "size.medium": "Middel (1920 px)",
   "size.small": "Klein (1280 px)",
   "size.tiny": "Heel klein (640 px)",
   "size.custom": "Zelf kiezen…",
-
   "filesize.none": "Geen limiet",
   "filesize.200kb": "200 KB",
   "filesize.500kb": "500 KB",
   "filesize.1mb": "1 MB",
   "filesize.2mb": "2 MB",
   "filesize.5mb": "5 MB",
-
   "split.label": "Splitsen in",
   "split.single": "Losse pagina's",
   "split.every": "Per N pagina's",
   "split.ranges": "Bereiken",
   "split.every_placeholder": "Pagina's per bestand, bv. 2",
   "split.ranges_hint": "Elk deel wordt een eigen PDF. Voorbeeld: 1-3, 4-6, 7-",
-
   "rotate.label": "Draaien",
   "rotate.right": "90° rechts",
   "rotate.half": "180°",
   "rotate.left": "90° links",
-
   "pages.label": "Pagina's",
   "pages.placeholder": "bv. 1-3, 5, 8-",
   "pages.all_placeholder": "Alle pagina's (of bv. 1-3, 5)",
   "pages.hint": "Gebruik komma's en streepjes. 8- betekent pagina 8 tot het einde.",
-
   "extract.remove": "Deze pagina's juist verwijderen",
-
   "compress.label": "Compressie",
   "compress.light": "Licht",
   "compress.strong": "Sterk",
   "compress.light_hint": "Verliesvrij opschonen. De kwaliteit blijft precies gelijk.",
   "compress.strong_hint": "Verkleint ook foto's en scans naar 150 dpi. Veel kleiner en nog steeds scherp op het scherm.",
-
   "output.same": "Zelfde map",
   "output.other": "Andere map…",
   "output.change": "wijzigen",
-
   "btn.convert": "Omzetten naar {fmt}",
   "btn.convert_plain": "Omzetten",
   "btn.merge": "Samenvoegen tot één PDF",
@@ -138,7 +122,6 @@
   "btn.tool.extract": "Gekozen pagina's opslaan",
   "btn.tool.remove": "Pagina's verwijderen",
   "btn.tool.compress": "PDF verkleinen",
-
   "status.waiting": "Wacht",
   "status.working": "Bezig…",
   "status.ready_to_merge": "Klaar voor samenvoegen",
@@ -146,12 +129,10 @@
   "status.merged": "Samengevoegd ✓",
   "status.failed": "Mislukt · details",
   "status.converting": "Bezig met omzetten…",
-
   "result.done.one": "Klaar! {n} bestand omgezet.",
   "result.done.other": "Klaar! {n} bestanden omgezet.",
   "result.merged": "Klaar! Samengevoegd tot ‘{name}’.",
   "result.partial": "{done} gelukt, {failed} mislukt. Klik op ‘Mislukt’ voor de reden.",
-
   "name.merged": "samengevoegd",
   "name.split": "gesplitst",
   "name.rotated": "gedraaid",
@@ -161,13 +142,11 @@
   "name.pages": "pagina's",
   "name.pages_removed": "pagina's verwijderd",
   "name.slides": "dia's",
-
   "dialog.choose_files": "Bestanden kiezen",
   "dialog.choose_folder": "Map kiezen",
   "dialog.output_folder": "Waar wil je de omgezette bestanden opslaan?",
   "dialog.all_supported": "Alle ondersteunde bestanden",
   "dialog.all_files": "Alle bestanden",
-
   "msg.unsupported_title": "Niet ondersteund",
   "msg.unsupported": "Deze bestanden kan Shift niet omzetten:\n\n{files}",
   "msg.failed_title": "Omzetten mislukt",
@@ -176,7 +155,6 @@
   "msg.bad_number": "Vul het aantal pagina's per bestand in als heel getal, bv. 2.",
   "msg.busy_title": "Nog bezig",
   "msg.busy": "Shift is nog bezig met omzetten. Toch afsluiten?",
-
   "err.unsupported": "Dit bestandstype wordt niet ondersteund.",
   "err.not_available": "{fmt} is voor dit bestand niet mogelijk.",
   "err.unknown_conversion": "Onbekende omzetting.",
@@ -195,7 +173,6 @@
   "err.libreoffice_failed": "LibreOffice kon dit bestand niet omzetten.",
   "err.ffmpeg_missing": "Het onderdeel voor video en audio (ffmpeg) ontbreekt.",
   "err.media_failed": "Omzetten van video/audio mislukt.",
-
   "settings.title": "Instellingen",
   "settings.language": "Taal",
   "settings.language_auto": "Zelfde als Windows",
@@ -205,11 +182,9 @@
   "settings.check_now": "Nu controleren",
   "settings.version": "Shift versie {version}",
   "settings.done": "Klaar",
-
   "theme.system": "Systeem",
   "theme.light": "Licht",
   "theme.dark": "Donker",
-
   "update.available": "Shift {version} is beschikbaar.",
   "update.now": "Nu bijwerken",
   "update.later": "Later",
@@ -219,5 +194,13 @@
   "update.check_failed": "Controleren lukte niet. Ben je online?",
   "update.not_configured": "Updates zijn voor deze versie van Shift niet ingesteld.",
   "update.failed_title": "Bijwerken mislukt",
-  "update.failed": "De update kon niet worden geïnstalleerd: {reason}\n\nProbeer het later opnieuw of download hem via de website."
+  "update.failed": "De update kon niet worden geïnstalleerd: {reason}\n\nProbeer het later opnieuw of download hem via de website.",
+  "opt.cad_scale": "Schaal van de tekening",
+  "cad.scale_paper": "1:1 (papierformaat in mm)",
+  "cad.hint": "Werkt bij PDF's uit een tekenprogramma, niet bij scans. Bogen worden polylijnen; lijnen, vlakken en tekst krijgen elk een eigen laag.",
+  "err.pdf_no_vectors": "Deze PDF bevat geen lijnen, alleen een afbeelding (bijvoorbeeld een scan). DXF en DWG werken alleen bij PDF's uit een tekenprogramma.",
+  "err.needs_oda": "Voor DWG is de gratis ODA File Converter nodig. Download hem via {url} en probeer het opnieuw. DXF werkt zonder extra software.",
+  "err.oda_failed": "De ODA File Converter kon het DWG-bestand niet maken.",
+  "msg.oda_title": "ODA File Converter nodig",
+  "msg.oda_missing": "DWG-bestanden worden gemaakt met de gratis ODA File Converter (van de Open Design Alliance). Die staat nog niet op deze computer.\n\nDe downloadpagina nu openen? Klik na het installeren opnieuw op Omzetten.\n\nTip: DXF heeft geen extra software nodig en opent ook gewoon in AutoCAD."
 }

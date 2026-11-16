@@ -5,7 +5,7 @@ datas = [("assets", "assets"), ("lang", "lang")]
 binaries = []
 # PIL.ImageTk is loaded lazily by CustomTkinter; without these the logo and images stay blank
 hiddenimports = ["PIL.ImageTk", "PIL._tkinter_finder", "PIL._imagingtk"]
-for package in ("customtkinter", "tkinterdnd2", "imageio_ffmpeg", "pillow_heif"):
+for package in ("customtkinter", "tkinterdnd2", "imageio_ffmpeg", "pillow_heif", "ezdxf"):
     d, b, h = collect_all(package)
     datas += d
     binaries += b

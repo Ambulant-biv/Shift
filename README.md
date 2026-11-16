@@ -9,6 +9,8 @@ anything: images, PDF, Word, Excel, PowerPoint, video and audio.
 - **Merge** several files into one PDF, in the order you choose (↑ ↓ or *Sort A–Z*)
 - **Resize and compress images**: preset sizes, custom size, quality, or a maximum file size
 - **PDF tools**: split, rotate, select or remove pages, compress
+- **PDF → DXF / DWG** for drawings exported from CAD programs, with a choice of scale
+  (DWG uses the free [ODA File Converter](https://www.opendesign.com/guestfiles/oda_file_converter), which users install themselves)
 - **Languages**: English, Nederlands, Deutsch — follows the Windows language automatically
 - **Light and dark theme**, or follow Windows
 - **Remembers your choices** between sessions
