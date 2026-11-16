@@ -102,6 +102,28 @@ def download(info: dict, progress=None) -> Path:
     return dest
 
 
+def clean_environment() -> dict[str, str]:
+    """Environment for starting the new Shift.exe without traces of this one.
+
+    A PyInstaller app passes variables to programs it starts (for example where it
+    unpacked itself). The new Shift would then look in our temporary folder, which
+    is deleted the moment we close, and fail with "Failed to load Python DLL".
+    """
+    unpacked = getattr(sys, "_MEIPASS", None)
+    env: dict[str, str] = {}
+    for key, value in os.environ.items():
+        if key.startswith("_PYI") or key == "_MEIPASS2":
+            continue
+        if unpacked and unpacked.lower() in value.lower():
+            if key.upper() != "PATH":
+                continue  # e.g. TCL_LIBRARY / TK_LIBRARY pointing into our folder
+            value = os.pathsep.join(part for part in value.split(os.pathsep)
+                                    if unpacked.lower() not in part.lower())
+        env[key] = value
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
+
+
 def apply_and_restart(new_exe: Path) -> None:
     """Starts a small helper that swaps in the new exe once Shift has closed."""
     exe = Path(sys.executable)
@@ -118,9 +140,10 @@ def apply_and_restart(new_exe: Path) -> None:
         "ping -n 2 127.0.0.1 >nul\r\n"
         "goto retry\r\n"
         ":ok\r\n"
+        "set PYINSTALLER_RESET_ENVIRONMENT=1\r\n"
         f'start "" "{exe}"\r\n'
         ":end\r\n"
         'del "%~f0"\r\n',
         encoding="utf-8")
-    subprocess.Popen(["cmd", "/c", str(script)], close_fds=True,
+    subprocess.Popen(["cmd", "/c", str(script)], close_fds=True, env=clean_environment(),
                      creationflags=0x08000000 | 0x00000200)  # no window, own group
