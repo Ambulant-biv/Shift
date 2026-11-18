@@ -1,7 +1,11 @@
 # PyInstaller build recipe for Shift.  Build with:  python -m PyInstaller shift.spec
+# Run get_libredwg.ps1 first, so DWG export (tools/libredwg) is included.
+import os
 from PyInstaller.utils.hooks import collect_all
 
-datas = [("assets", "assets"), ("lang", "lang")]
+datas = [("assets", "assets"), ("lang", "lang"), ("licenses", "licenses")]
+if os.path.isdir("tools"):
+    datas.append(("tools", "tools"))
 binaries = []
 # PIL.ImageTk is loaded lazily by CustomTkinter; without these the logo and images stay blank
 hiddenimports = ["PIL.ImageTk", "PIL._tkinter_finder", "PIL._imagingtk"]

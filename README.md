@@ -10,7 +10,7 @@ anything: images, PDF, Word, Excel, PowerPoint, video and audio.
 - **Resize and compress images**: preset sizes, custom size, quality, or a maximum file size
 - **PDF tools**: split, rotate, select or remove pages, compress
 - **PDF → DXF / DWG** for drawings exported from CAD programs, with a choice of scale
-  (DWG uses the free [ODA File Converter](https://www.opendesign.com/guestfiles/oda_file_converter), which users install themselves)
+  (DWG in AutoCAD 2000 format, made with the bundled GNU LibreDWG — nothing extra to install)
 - **Languages**: English, Nederlands, Deutsch — follows the Windows language automatically
 - **Light and dark theme**, or follow Windows
 - **Remembers your choices** between sessions
@@ -36,6 +36,15 @@ pip install -r requirements.txt
 python shift.py
 ```
 
+## Install
+
+- **Installer (recommended):** download `ShiftSetup.exe` from the [latest release](https://github.com/Ambulant-biv/Shift/releases/latest).
+  It installs per user (no admin rights), adds Shift to the Start menu, Send to and *Settings › Apps*.
+- **winget:** `winget install AmbulantBiv.Shift`
+- **Portable:** download `Shift.exe` and run it from anywhere.
+
+Website: https://ambulant-biv.github.io/Shift/
+
 ## Build and install on your own PC
 
 Double-click `build_and_install.bat`. It builds `dist\Shift.exe`, installs it to
@@ -58,17 +67,47 @@ For every new version:
    git tag v1.2.0
    git push && git push --tags
    ```
-3. GitHub Actions builds `Shift.exe`, creates `Shift.exe.sha256` and publishes the release.
+3. GitHub Actions builds `Shift.exe` and the installer `ShiftSetup.exe` (Inno Setup, `installer/shift.iss`),
+   adds a SHA-256 checksum for each and publishes the release. If the `WINGET_TOKEN` secret exists,
+   it also sends the new version to winget.
 
 Running copies of Shift check once a day. Users see a banner, click **Update now**,
-and Shift downloads the new version, verifies its SHA-256 checksum, replaces itself
-and restarts. No admin rights are needed.
+and Shift downloads the new version and verifies its SHA-256 checksum. Installed copies run
+the new installer silently (so *Settings › Apps* and winget show the right version); portable
+copies swap in the new exe. Then Shift restarts. No admin rights are needed.
+
+## winget
+
+First submission (once): after a release with `ShiftSetup.exe` exists, run
+`powershell -ExecutionPolicy Bypass -File winget\submit-first-version.ps1 -Version <version>`.
+It fills in the manifests from `winget/templates`, validates them and opens a pull request to
+[microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) with `wingetcreate`.
+
+After Microsoft has accepted it, create a classic GitHub token with the `public_repo` scope and
+add it to this repository as the secret `WINGET_TOKEN`. From then on every release updates winget.
+
+## Website
+
+The website is `docs/index.html` (one file, no build step). In the repository settings, under
+**Pages**, choose *Deploy from a branch*, branch `main`, folder `/docs`.
 
 ## Adding a language
 
 Copy `lang/en.json` to `lang/<code>.json` (for example `fr.json`), translate the values
 and keep the `{placeholders}` intact. Users can also drop extra language files into
 `%APPDATA%\Shift\lang`. Missing texts fall back to English.
+
+## Third-party components
+
+| Component | Used for | Licence |
+|---|---|---|
+| [GNU LibreDWG 0.13.3](https://github.com/LibreDWG/libredwg/releases/tag/0.13.3) (`dxf2dwg.exe`) | Writing DWG files | GPL-3.0 (`licenses/LibreDWG-COPYING.txt`); unmodified, source at the link |
+| [PyMuPDF](https://pymupdf.readthedocs.io) | Everything PDF | AGPL-3.0 |
+| [FFmpeg](https://ffmpeg.org) via imageio-ffmpeg | Video and audio | GPL/LGPL |
+| [ezdxf](https://ezdxf.mozman.at) | Writing DXF files | MIT |
+| [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) | User interface | MIT |
+
+`get_libredwg.ps1` downloads LibreDWG and checks its SHA-256 before every build.
 
 ## Before distributing widely
 

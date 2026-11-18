@@ -633,9 +633,11 @@ class Shift(*BASES):
                             border_color=BORDER)
         card.pack(fill="x", pady=4, padx=(0, 8))
         card.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(card, text=path.suffix.lstrip(".").upper()[:4], width=48, height=38,
+        badge = path.suffix.lstrip(".").upper()[:4]
+        ctk.CTkLabel(card, text=badge, width=48, height=38,
                      corner_radius=9, fg_color=CATEGORY_COLOR[cat], text_color="#FFFFFF",
-                     font=F(11, "bold")).grid(row=0, column=0, rowspan=2, padx=12, pady=11)
+                     font=F(11 if len(badge) <= 3 else 9, "bold")).grid(
+            row=0, column=0, rowspan=2, padx=12, pady=11)
         ctk.CTkLabel(card, text=shorten(path.name), font=F(13, "bold"), text_color=TEXT,
                      anchor="w").grid(row=0, column=1, sticky="sw", pady=(9, 0))
         try:
@@ -1014,10 +1016,6 @@ class Shift(*BASES):
     def _start(self):
         action = self.action
         if self.busy or not action or not self.order:
-            return
-        if action == "dwg" and not engine.find_oda_converter():
-            if messagebox.askyesno(t("msg.oda_title"), t("msg.oda_missing")):
-                webbrowser.open(engine.ODA_DOWNLOAD)
             return
         opt = self._read_options()
         if opt is None:

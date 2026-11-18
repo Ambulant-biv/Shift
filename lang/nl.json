@@ -60,7 +60,7 @@
   "fmt.flac": "FLAC-audio (.flac)",
   "fmt.ogg": "OGG-audio (.ogg)",
   "fmt.dxf": "CAD-tekening (.dxf) – opent in AutoCAD, BricsCAD, DraftSight, …",
-  "fmt.dwg": "AutoCAD-tekening (.dwg) – via de gratis ODA File Converter",
+  "fmt.dwg": "AutoCAD-tekening (.dwg, AutoCAD 2000-formaat)",
   "tool.split": "Splitsen",
   "tool.rotate": "Draaien",
   "tool.extract": "Pagina's kiezen",
@@ -199,8 +199,6 @@
   "cad.scale_paper": "1:1 (papierformaat in mm)",
   "cad.hint": "Werkt bij PDF's uit een tekenprogramma, niet bij scans. Bogen worden polylijnen; lijnen, vlakken en tekst krijgen elk een eigen laag.",
   "err.pdf_no_vectors": "Deze PDF bevat geen lijnen, alleen een afbeelding (bijvoorbeeld een scan). DXF en DWG werken alleen bij PDF's uit een tekenprogramma.",
-  "err.needs_oda": "Voor DWG is de gratis ODA File Converter nodig. Download hem via {url} en probeer het opnieuw. DXF werkt zonder extra software.",
-  "err.oda_failed": "De ODA File Converter kon het DWG-bestand niet maken.",
-  "msg.oda_title": "ODA File Converter nodig",
-  "msg.oda_missing": "DWG-bestanden worden gemaakt met de gratis ODA File Converter (van de Open Design Alliance). Die staat nog niet op deze computer.\n\nDe downloadpagina nu openen? Klik na het installeren opnieuw op Omzetten.\n\nTip: DXF heeft geen extra software nodig en opent ook gewoon in AutoCAD."
+  "err.dwg_failed": "Het DWG-bestand kon niet worden gemaakt. Probeer DXF; dat opent ook in AutoCAD.",
+  "err.dwg_missing": "Het DWG-onderdeel ontbreekt in deze versie van Shift. Probeer DXF."
 }

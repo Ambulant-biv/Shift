@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: AmbulantBiv.Shift
+PackageVersion: {{VERSION}}
+PackageLocale: en-US
+Publisher: Ambulant-biv
+PublisherUrl: https://github.com/Ambulant-biv
+PublisherSupportUrl: https://github.com/Ambulant-biv/Shift/issues
+PackageName: Shift
+PackageUrl: https://ambulant-biv.github.io/Shift/
+License: AGPL-3.0
+LicenseUrl: https://github.com/Ambulant-biv/Shift/blob/main/LICENSE
+ShortDescription: Convert images, PDFs, Office documents, drawings, video and audio on your own computer.
+Description: |-
+  Shift converts files locally, without uploading anything: JPG to PDF, Word to PDF,
+  PDF to Word, PDF to DWG or DXF, video to MP3 and much more. It also resizes and
+  compresses images and includes PDF tools to merge, split, rotate, select pages and compress.
+Tags:
+  - converter
+  - pdf
+  - dwg
+  - dxf
+  - image
+  - video
+ReleaseNotesUrl: https://github.com/Ambulant-biv/Shift/releases/tag/v{{VERSION}}
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

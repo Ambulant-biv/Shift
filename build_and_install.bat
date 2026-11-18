@@ -25,6 +25,8 @@ if errorlevel 1 goto failed
 
 echo.
 echo [2/3] Building the app (this takes a few minutes)...
+powershell -NoProfile -ExecutionPolicy Bypass -File get_libredwg.ps1
+if errorlevel 1 goto failed
 %PY% -m PyInstaller shift.spec --noconfirm --clean
 if errorlevel 1 goto failed
 

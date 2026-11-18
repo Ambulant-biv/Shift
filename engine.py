@@ -508,12 +508,11 @@ def merge_pdfs(paths: list[Path], dest: Path) -> None:
 
 
 # --------------------------------------------------------------------------
-# PDF to CAD (DXF, and DWG through the free ODA File Converter)
+# PDF to CAD (DXF, and DWG through the bundled LibreDWG)
 # --------------------------------------------------------------------------
 PT_TO_MM = 25.4 / 72
 LINEWEIGHTS = [0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100,
                106, 120, 140, 158, 200, 211]  # valid DXF lineweights (1/100 mm)
-ODA_DOWNLOAD = "https://www.opendesign.com/guestfiles/oda_file_converter"
 
 
 def _true_color(rgb) -> int | None:
@@ -521,6 +520,35 @@ def _true_color(rgb) -> int | None:
         return None
     r, g, b = (max(0, min(255, round(c * 255))) for c in rgb[:3])
     return (r << 16) | (g << 8) | b
+
+
+_ACI_CACHE: dict[int, int] = {}
+
+
+def _nearest_aci(rgb_int: int) -> int:
+    """Closest AutoCAD standard colour (1-255) for a 24-bit RGB value."""
+    if rgb_int in _ACI_CACHE:
+        return _ACI_CACHE[rgb_int]
+    from ezdxf.colors import DXF_DEFAULT_COLORS
+    r, g, b = (rgb_int >> 16) & 255, (rgb_int >> 8) & 255, rgb_int & 255
+    best, best_d = 7, None
+    for aci in range(1, 256):
+        c = DXF_DEFAULT_COLORS[aci]
+        d = (((c >> 16) & 255) - r) ** 2 + (((c >> 8) & 255) - g) ** 2 + ((c & 255) - b) ** 2
+        if best_d is None or d < best_d:
+            best, best_d = aci, d
+    if best in (7, 255, 254, 250, 251, 252, 253, 8, 9) and max(r, g, b) < 40:
+        best = 7  # black prints as black/white depending on the background, like in AutoCAD
+    _ACI_CACHE[rgb_int] = best
+    return best
+
+
+def _set_color(entity, rgb_int: int | None) -> None:
+    if rgb_int is None:
+        return
+    entity.dxf.color = _nearest_aci(rgb_int)
+    if entity.doc and entity.doc.dxfversion >= "AC1018":  # true colour exists from AutoCAD 2004
+        entity.dxf.true_color = rgb_int
 
 
 def _lineweight(width_pt: float | None) -> int:
@@ -581,7 +609,7 @@ def _path_runs(items, to_xy) -> list[list[tuple[float, float]]]:
     return runs
 
 
-def _page_to_dxf(page, dest: Path, opt: Options) -> None:
+def _page_to_dxf(page, dest: Path, opt: Options, version: str = "R2018") -> None:
     import ezdxf
     from math import atan2, degrees
 
@@ -601,7 +629,7 @@ def _page_to_dxf(page, dest: Path, opt: Options) -> None:
     if not drawings and not spans:
         raise ShiftError("err.pdf_no_vectors")
 
-    doc = ezdxf.new("R2018", setup=True)
+    doc = ezdxf.new(version, setup=True)  # LibreDWG needs the standard tables for a valid DWG
     doc.units = ezdxf.units.MM
     for name, color in (("PDF_LINES", 7), ("PDF_FILLS", 8), ("PDF_TEXT", 7)):
         doc.layers.add(name, color=color)
@@ -616,7 +644,7 @@ def _page_to_dxf(page, dest: Path, opt: Options) -> None:
         if "f" in kind and d.get("fill"):
             hatch = msp.add_hatch(dxfattribs={"layer": "PDF_FILLS"})
             hatch.set_solid_fill(rgb=None)
-            hatch.dxf.true_color = _true_color(d["fill"])
+            _set_color(hatch, _true_color(d["fill"]))
             for run in runs:
                 hatch.paths.add_polyline_path(run, is_closed=True)
         if "s" in kind and d.get("color") is not None:
@@ -626,8 +654,7 @@ def _page_to_dxf(page, dest: Path, opt: Options) -> None:
                 is_closed = closed or (len(run) > 2 and run[0] == run[-1])
                 points = run[:-1] if is_closed and run[0] == run[-1] else run
                 pl = msp.add_lwpolyline(points, close=is_closed, dxfattribs=attribs)
-                if color is not None:
-                    pl.dxf.true_color = color
+                _set_color(pl, color)
 
     for line, span in spans:
         direction = fitz.Point(line.get("dir", (1, 0))) * fitz.Matrix(rotate.a, rotate.b, rotate.c, rotate.d, 0, 0)
@@ -639,52 +666,45 @@ def _page_to_dxf(page, dest: Path, opt: Options) -> None:
         entity.set_placement(to_xy(span["origin"]))
         color = span.get("color")
         if isinstance(color, int) and color:
-            entity.dxf.true_color = color
+            _set_color(entity, color)
 
     doc.saveas(dest)
 
 
-def find_oda_converter() -> str | None:
-    import glob
-    found = shutil.which("ODAFileConverter")
-    if found:
-        return found
-    for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)")):
-        if base:
-            hits = sorted(glob.glob(os.path.join(base, "ODA", "ODAFileConverter*", "ODAFileConverter.exe")))
-            if hits:
-                return hits[-1]  # newest version
-    return None
+def find_dxf2dwg() -> str | None:
+    """LibreDWG's dxf2dwg, shipped inside Shift (tools/libredwg)."""
+    from paths import resource_path
+    exe = "dxf2dwg.exe" if sys.platform == "win32" else "dxf2dwg"
+    bundled = resource_path("tools", "libredwg", exe)
+    if bundled.exists():
+        return str(bundled)
+    return shutil.which("dxf2dwg")
 
 
 def dxf_to_dwg(dxf_files: list[Path]) -> list[Path]:
-    """Converts DXF files to DWG (AutoCAD 2018) next to them, then removes the DXF."""
-    oda = find_oda_converter()
-    if not oda:
-        raise ShiftError("err.needs_oda", url=ODA_DOWNLOAD)
+    """Converts R2000 DXF files to DWG (AutoCAD 2000 format) next to them."""
+    tool = find_dxf2dwg()
+    if not tool:
+        raise ShiftError("err.dwg_missing")
     results = []
-    with tempfile.TemporaryDirectory(prefix="shift_oda_") as tmp:
-        src_dir, out_dir = Path(tmp, "in"), Path(tmp, "out")
-        src_dir.mkdir()
-        out_dir.mkdir()
-        for f in dxf_files:
-            shutil.copy2(f, src_dir / f.name)
-        subprocess.run([oda, str(src_dir), str(out_dir), "ACAD2018", "DWG", "0", "1", "*.DXF"],
-                       capture_output=True, timeout=900, creationflags=NO_WINDOW)
-        for f in dxf_files:
-            made = out_dir / (f.stem + ".dwg")
-            if not made.exists():
-                raise ShiftError("err.oda_failed")
-            dest = unique_path(f.with_suffix(".dwg"))
-            shutil.move(str(made), str(dest))
-            f.unlink()
-            results.append(dest)
+    for f in dxf_files:
+        f = f.resolve()
+        dest = unique_path(f.with_suffix(".dwg"))
+        res = subprocess.run([tool, "-y", "-o", str(dest), str(f)], capture_output=True,
+                             timeout=900, creationflags=NO_WINDOW,
+                             cwd=str(Path(tool).parent))
+        if res.returncode != 0 or not dest.exists() or dest.stat().st_size < 1000:
+            dest.unlink(missing_ok=True)
+            raise ShiftError("err.dwg_failed")
+        f.unlink()
+        results.append(dest)
     return results
 
 
 def pdf_to_cad(src: Path, ext: str, outdir: Path, opt: Options) -> list[Path]:
-    if ext == "dwg" and not find_oda_converter():
-        raise ShiftError("err.needs_oda", url=ODA_DOWNLOAD)
+    if ext == "dwg" and not find_dxf2dwg():
+        raise ShiftError("err.dwg_missing")
+    version = "R2000" if ext == "dwg" else "R2018"  # LibreDWG writes DWG from R2000 DXF
     doc = open_pdf(src)
     try:
         n = doc.page_count
@@ -701,7 +721,7 @@ def pdf_to_cad(src: Path, ext: str, outdir: Path, opt: Options) -> list[Path]:
         for page, name in zip(doc, names):
             dest = unique_path(folder / f"{name}.dxf")
             try:
-                _page_to_dxf(page, dest, opt)
+                _page_to_dxf(page, dest, opt, version)
                 made.append(dest)
             except ShiftError:
                 if n == 1:

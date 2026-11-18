@@ -60,7 +60,7 @@
   "fmt.flac": "FLAC-Audio (.flac)",
   "fmt.ogg": "OGG-Audio (.ogg)",
   "fmt.dxf": "CAD-Zeichnung (.dxf) – öffnet in AutoCAD, BricsCAD, DraftSight, …",
-  "fmt.dwg": "AutoCAD-Zeichnung (.dwg) – über den kostenlosen ODA File Converter",
+  "fmt.dwg": "AutoCAD-Zeichnung (.dwg, AutoCAD-2000-Format)",
   "tool.split": "Teilen",
   "tool.rotate": "Drehen",
   "tool.extract": "Seiten wählen",
@@ -199,8 +199,6 @@
   "cad.scale_paper": "1:1 (Papiergröße in mm)",
   "cad.hint": "Funktioniert bei PDFs aus einem Zeichenprogramm, nicht bei Scans. Bögen werden zu Polylinien; Linien, Flächen und Text erhalten eigene Layer.",
   "err.pdf_no_vectors": "Dieses PDF enthält keine Linien, nur ein Bild (zum Beispiel einen Scan). DXF und DWG funktionieren nur bei PDFs aus einem Zeichenprogramm.",
-  "err.needs_oda": "Für DWG wird der kostenlose ODA File Converter benötigt. Laden Sie ihn unter {url} herunter und versuchen Sie es erneut. DXF funktioniert ohne zusätzliche Software.",
-  "err.oda_failed": "Der ODA File Converter konnte die DWG-Datei nicht erstellen.",
-  "msg.oda_title": "ODA File Converter benötigt",
-  "msg.oda_missing": "DWG-Dateien werden mit dem kostenlosen ODA File Converter (der Open Design Alliance) erstellt, der noch nicht installiert ist.\n\nDownloadseite jetzt öffnen? Klicken Sie nach der Installation erneut auf Umwandeln.\n\nTipp: DXF braucht keine zusätzliche Software und öffnet sich auch in AutoCAD."
+  "err.dwg_failed": "Die DWG-Datei konnte nicht erstellt werden. Versuchen Sie DXF; das öffnet sich auch in AutoCAD.",
+  "err.dwg_missing": "Die DWG-Komponente fehlt in dieser Shift-Version. Versuchen Sie DXF."
 }

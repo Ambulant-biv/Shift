@@ -60,7 +60,7 @@
   "fmt.flac": "FLAC audio (.flac)",
   "fmt.ogg": "OGG audio (.ogg)",
   "fmt.dxf": "CAD drawing (.dxf) – opens in AutoCAD, BricsCAD, DraftSight, …",
-  "fmt.dwg": "AutoCAD drawing (.dwg) – uses the free ODA File Converter",
+  "fmt.dwg": "AutoCAD drawing (.dwg, AutoCAD 2000 format)",
   "tool.split": "Split",
   "tool.rotate": "Rotate",
   "tool.extract": "Select pages",
@@ -199,8 +199,6 @@
   "cad.scale_paper": "1:1 (paper size in mm)",
   "cad.hint": "Works for PDFs exported from a drawing program, not for scans. Curves become polylines; lines, fills and text get their own layers.",
   "err.pdf_no_vectors": "This PDF contains no lines, only an image (for example a scan). DXF and DWG only work for PDFs exported from a drawing program.",
-  "err.needs_oda": "DWG needs the free ODA File Converter. Download it from {url} and try again. DXF works without extra software.",
-  "err.oda_failed": "The ODA File Converter could not create the DWG file.",
-  "msg.oda_title": "ODA File Converter needed",
-  "msg.oda_missing": "DWG files are made with the free ODA File Converter (from the Open Design Alliance), which is not installed yet.\n\nOpen the download page now? After installing, click Convert again.\n\nTip: DXF needs no extra software and also opens in AutoCAD."
+  "err.dwg_failed": "The DWG file could not be created. Try DXF instead; it opens in AutoCAD too.",
+  "err.dwg_missing": "The DWG component is missing from this copy of Shift. Try DXF instead."
 }

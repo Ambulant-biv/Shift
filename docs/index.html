@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shift – convert any file on your own computer</title>
+<meta name="description" content="Shift is a free Windows app that converts images, PDFs, Office documents, drawings, video and audio locally. Nothing is uploaded.">
+<meta property="og:title" content="Shift – convert any file on your own computer">
+<meta property="og:description" content="Free Windows app: JPG to PDF, Word to PDF, PDF to DWG, video to MP3 and more. Nothing is uploaded.">
+<meta property="og:image" content="https://ambulant-biv.github.io/Shift/img/hero.webp">
+<link rel="icon" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F7F7FB;
+  --surface: #FFFFFF;
+  --ink: #17182E;
+  --slate: #5C6180;
+  --mist: #E4E5F0;
+  --violet: #5B3FE6;
+  --violet-ink: #FFFFFF;
+  --cyan: #0B8FAD;
+  --code: #EEEDFB;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121327;
+    --surface: #1B1D38;
+    --ink: #ECEDF7;
+    --slate: #A3A7C4;
+    --mist: #2C2F55;
+    --violet: #9A86FF;
+    --violet-ink: #121327;
+    --cyan: #3CCDEA;
+    --code: #23254A;
+    color-scheme: dark;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1.0625rem/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--violet); text-underline-offset: .18em; }
+a:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--cyan); outline-offset: 3px; border-radius: 6px;
+}
+.wrap { width: min(1160px, 100% - 3rem); margin-inline: auto; }
+
+/* ---------- header ---------- */
+.top { display: flex; align-items: center; gap: 2rem; padding: 1.25rem 0; }
+.brand { display: flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--ink);
+  font: 700 1.35rem/1 var(--display); }
+.brand img { width: 36px; height: 36px; }
+.top nav { display: flex; gap: 1.5rem; margin-left: auto; }
+.top nav a { color: var(--slate); text-decoration: none; font-size: .975rem; }
+.top nav a:hover { color: var(--ink); }
+.lang { display: flex; border: 1px solid var(--mist); border-radius: 999px; padding: 3px; }
+.lang button { border: 0; background: none; color: var(--slate); font: 700 .8rem/1 var(--body);
+  padding: .45rem .7rem; border-radius: 999px; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 3.5rem;
+  align-items: center; padding: 3.5rem 0 5rem; }
+h1 {
+  margin: 0;
+  font: 800 clamp(2.5rem, 4.8vw, 4.1rem)/1.03 var(--display);
+  font-variation-settings: "wdth" 84;
+  letter-spacing: -.02em;
+  max-width: 13ch;
+}
+/* hero picture: one window cut in two along the diagonal of the logo */
+.sliced { position: relative; margin: 0; aspect-ratio: 1120 / 780; }
+.sliced img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 14px; }
+.sliced .dark { clip-path: polygon(0 0, 65.4% 0, 33.4% 100%, 0 100%); transform: translate(-1.4%, 2%); }
+.sliced .light { clip-path: polygon(66.6% 0, 100% 0, 100% 100%, 34.6% 100%); transform: translate(1.4%, -2%);
+  box-shadow: 0 0 0 1px var(--mist); }
+.sliced img { animation: apart 1000ms cubic-bezier(.2, .8, .2, 1) 300ms both; }
+@keyframes apart { from { transform: translate(0, 0); } }
+@media (prefers-reduced-motion: reduce) { .sliced img { animation: none; } }
+.lead { font-size: 1.2rem; color: var(--slate); max-width: 34em; margin: 1.6rem 0 2rem; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.btn { display: inline-flex; align-items: center; gap: .6rem; padding: .95rem 1.4rem;
+  border-radius: 12px; font: 700 1.05rem/1 var(--body); text-decoration: none; }
+.btn-main { background: var(--violet); color: var(--violet-ink); }
+.btn-main:hover { filter: brightness(1.08); }
+.btn svg { width: 20px; height: 20px; }
+.small { font-size: .9rem; color: var(--slate); margin-top: 1rem; }
+.hero figure { margin: 0; }
+
+/* ---------- winget command ---------- */
+.cmd { display: inline-flex; align-items: center; gap: .25rem; background: var(--code);
+  border-radius: 12px; padding: .35rem .35rem .35rem 1rem; max-width: 100%; }
+.cmd code { font: 500 .95rem/1.4 Consolas, "Cascadia Mono", ui-monospace, monospace;
+  white-space: nowrap; overflow-x: auto; min-width: 0; flex: 1; }
+.way .cmd { display: flex; width: 100%; }
+.way .cmd code { font-size: .85rem; }
+.cmd button { border: 0; background: var(--surface); color: var(--ink); border-radius: 9px;
+  padding: .55rem .8rem; font: 700 .85rem/1 var(--body); cursor: pointer; }
+
+/* ---------- sections ---------- */
+section { padding: 4.5rem 0; border-top: 1px solid var(--mist); }
+h2 { font: 750 clamp(1.9rem, 3.4vw, 2.7rem)/1.1 var(--display); font-variation-settings: "wdth" 88;
+  letter-spacing: -.015em; margin: 0 0 1rem; max-width: 22ch; }
+.intro { color: var(--slate); max-width: 40em; margin: 0 0 2.5rem; font-size: 1.1rem; }
+
+/* conversion table */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th, td { text-align: left; padding: 1.05rem 1rem 1.05rem 0; vertical-align: top; border-bottom: 1px solid var(--mist); }
+thead th { font: 700 .95rem/1.2 var(--body); color: var(--slate); padding-top: 0; }
+tbody th { font: 700 1.15rem/1.3 var(--display); width: 18%; }
+td:nth-child(2) { width: 34%; color: var(--slate); }
+.note { color: var(--slate); font-size: .95rem; margin-top: 1.25rem; max-width: 46em; }
+
+/* split blocks */
+.split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 3.5rem; align-items: center; }
+.split.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
+.split.flip .text { order: 2; }
+.shot { border-radius: 14px; border: 1px solid var(--mist); background: var(--surface); overflow: hidden; }
+.compare { border-radius: 14px; border: 1px solid var(--mist); background: #fff; padding: 1rem; }
+figcaption { font-size: .9rem; color: var(--slate); margin-top: .75rem; }
+.facts { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; gap: .9rem; }
+.facts li { padding-left: 1.4rem; position: relative; }
+.facts li::before { content: ""; position: absolute; left: 0; top: .62em; width: .6rem; height: .6rem;
+  background: var(--cyan); clip-path: polygon(0 0, 100% 0, 0 100%); }
+
+/* privacy statement */
+.statement { font: 750 clamp(1.7rem, 3.2vw, 2.5rem)/1.2 var(--display); font-variation-settings: "wdth" 88;
+  max-width: 24ch; margin: 0 0 1.5rem; }
+
+/* install options */
+.ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.way { padding: 1.5rem 1.5rem 1.5rem 0; }
+.way + .way { padding-left: 1.5rem; border-left: 1px solid var(--mist); }
+.way h3 { font: 700 1.35rem/1.2 var(--display); margin: 0 0 .5rem; }
+.way p { color: var(--slate); margin: 0 0 1.1rem; }
+.tag { font-size: .8rem; font-weight: 700; color: var(--cyan); display: block; margin-bottom: .4rem; }
+.warning { margin-top: 2.5rem; padding: 1.25rem 1.5rem; background: var(--code); border-radius: 12px; max-width: 52em; }
+.warning strong { display: block; margin-bottom: .25rem; }
+
+/* faq */
+details { border-bottom: 1px solid var(--mist); padding: 1.1rem 0; max-width: 52em; }
+summary { font: 700 1.15rem/1.4 var(--display); cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--violet); font-weight: 400; font-size: 1.5rem; line-height: 1; }
+details[open] summary::after { content: "−"; }
+details p { color: var(--slate); margin: .75rem 0 0; }
+
+footer { border-top: 1px solid var(--mist); padding: 2.5rem 0 3.5rem; color: var(--slate); font-size: .95rem; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; }
+
+@media (max-width: 640px) {
+  table { min-width: 0; }
+  thead { display: none; }
+  table, tbody, tr, th, td { display: block; width: auto !important; }
+  tr { padding: 1rem 0; border-bottom: 1px solid var(--mist); }
+  th, td { border: 0; padding: 0; }
+  td:nth-child(2) { margin: .25rem 0; }
+  td:nth-child(3)::before { content: "→ "; color: var(--violet); }
+}
+@media (max-width: 880px) {
+  .top nav { display: none; }
+  .lang { margin-left: auto; }
+  .hero, .split, .split.flip { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+  .cmd { display: flex; width: 100%; }
+  .split.flip .text { order: 0; }
+  .hero { padding-top: 2rem; }
+  .ways { grid-template-columns: minmax(0, 1fr); }
+  .way { padding-right: 0; }
+  .way + .way { padding-left: 0; border-left: 0; border-top: 1px solid var(--mist); }
+}
+</style>
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="#"><img src="img/logo.png" alt="" width="36" height="36">Shift</a>
+  <nav aria-label="Sections">
+    <a href="#formats" data-i18n="nav.formats">What it converts</a>
+    <a href="#drawings" data-i18n="nav.drawings">Drawings</a>
+    <a href="#privacy" data-i18n="nav.privacy">Privacy</a>
+    <a href="#install" data-i18n="nav.install">Install</a>
+  </nav>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="nl" aria-pressed="false">NL</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1 data-i18n="hero.title">Convert any file. Keep it on your computer.</h1>
+      <p class="lead" data-i18n="hero.lead">Shift turns photos, PDFs, Word, Excel and PowerPoint files, drawings, video and audio into the format you need. Everything happens on your Windows PC; nothing is uploaded.</p>
+      <div class="actions">
+        <a class="btn btn-main" href="https://github.com/Ambulant-biv/Shift/releases/latest/download/ShiftSetup.exe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
+          <span data-i18n="hero.download">Download for Windows</span>
+        </a>
+        <div class="cmd"><code>winget install AmbulantBiv.Shift</code><button type="button" class="copy" data-i18n="copy">Copy</button></div>
+      </div>
+      <p class="small"><span data-i18n="hero.free">Free and open source, for Windows 10 and 11.</span> <span id="version"></span></p>
+    </div>
+    <figure class="sliced" role="img" aria-label="The Shift window in dark and light theme, merging two photos, a PDF and a Word file into one PDF." data-i18n-label="hero.alt">
+      <img class="light" src="img/hero-light.webp" width="1120" height="780" alt="">
+      <img class="dark" src="img/hero-dark.webp" width="1120" height="780" alt="">
+    </figure>
+  </div>
+
+  <section id="formats">
+    <div class="wrap">
+      <h2 data-i18n="formats.title">What Shift converts</h2>
+      <p class="intro" data-i18n="formats.intro">Add files or a whole folder, pick the format you want, and Shift does the rest. Your originals are never changed or overwritten.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col" data-i18n="formats.kind">Kind</th><th scope="col" data-i18n="formats.from">From</th><th scope="col" data-i18n="formats.to">To</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" data-i18n="kind.images">Images</th><td>JPG, PNG, HEIC, WebP, TIFF, BMP, GIF, ICO</td><td data-i18n="to.images">PDF or any other image format, resized or compressed to a maximum file size</td></tr>
+            <tr><th scope="row">PDF</th><td>PDF</td><td data-i18n="to.pdf">Word, JPG, PNG, TIFF, text, DXF, DWG, or a smaller PDF</td></tr>
+            <tr><th scope="row" data-i18n="kind.documents">Documents</th><td>Word, RTF, ODT, TXT, HTML</td><td data-i18n="to.documents">PDF, Word, RTF, ODT, plain text, web page</td></tr>
+            <tr><th scope="row" data-i18n="kind.spreadsheets">Spreadsheets</th><td>Excel, CSV, ODS</td><td>PDF, Excel, CSV, ODS</td></tr>
+            <tr><th scope="row" data-i18n="kind.presentations">Presentations</th><td>PowerPoint, ODP</td><td data-i18n="to.presentations">PDF, PowerPoint, ODP, or one image per slide</td></tr>
+            <tr><th scope="row">Video</th><td>MP4, MOV, AVI, MKV, WMV, WebM</td><td data-i18n="to.video">MP4, MOV, MKV, WebM, AVI, GIF, or just the sound as MP3 or WAV</td></tr>
+            <tr><th scope="row">Audio</th><td>MP3, WAV, M4A, AAC, FLAC, OGG, WMA</td><td>MP3, WAV, M4A, AAC, FLAC, OGG</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" data-i18n="formats.note">Word, Excel and PowerPoint files are converted with Microsoft Office, or LibreOffice if that is what you have. Everything else works without extra software.</p>
+    </div>
+  </section>
+
+  <section id="drawings">
+    <div class="wrap split">
+      <div class="text">
+        <h2 data-i18n="cad.title">PDF drawings back into CAD</h2>
+        <p data-i18n="cad.text">Got a floor plan as a PDF? Shift turns it into DXF or DWG at the scale you choose, from 1:1 to 1:1000. Lines, filled areas and text each get their own layer, so you can carry on in AutoCAD, BricsCAD or DraftSight.</p>
+        <p class="note" data-i18n="cad.note">Works for PDFs exported from drawing software. A scanned drawing is only a picture, so there are no lines to convert.</p>
+      </div>
+      <figure class="compare-fig" style="margin:0">
+        <div class="compare"><img src="img/pdf-to-dwg.webp" width="1824" height="566" alt="A floor plan as PDF on the left and the same plan converted to DWG by Shift on the right." data-i18n-alt="cad.alt"></div>
+        <figcaption data-i18n="cad.caption">Left: the PDF. Right: the DWG made by Shift.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="pdf">
+    <div class="wrap split flip">
+      <div class="text">
+        <h2 data-i18n="pdf.title">The PDF tools you would otherwise look for online</h2>
+        <ul class="facts">
+          <li data-i18n="pdf.merge">Merge photos, PDFs and documents into one PDF, in the order you choose.</li>
+          <li data-i18n="pdf.split">Split into single pages, every few pages, or the ranges you type.</li>
+          <li data-i18n="pdf.rotate">Rotate all pages, or only the ones that are upside down.</li>
+          <li data-i18n="pdf.extract">Keep the pages you need, or remove the ones you don’t.</li>
+          <li data-i18n="pdf.compress">Compress for email: a 5.3 MB inspection report became 483 KB in our test.</li>
+        </ul>
+      </div>
+      <img class="shot" src="img/tools.webp" width="1120" height="780" loading="lazy" alt="Shift splitting two PDFs into page ranges." data-i18n-alt="pdf.alt">
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap">
+      <p class="statement" data-i18n="privacy.title">Your files never leave your computer.</p>
+      <ul class="facts" style="max-width:46em">
+        <li data-i18n="privacy.offline">Shift works offline. There is no account and nothing is uploaded.</li>
+        <li data-i18n="privacy.updates">The only thing it asks the internet is whether a new version is out, once a day. You can switch that off in Settings.</li>
+        <li data-i18n="privacy.open">The source code is public, so anyone can check what Shift does.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <h2 data-i18n="install.title">Install Shift</h2>
+      <p class="intro" data-i18n="install.intro">Choose the way that suits you. All three give you the same app, and Shift keeps itself up to date.</p>
+      <div class="ways">
+        <div class="way">
+          <span class="tag" data-i18n="install.recommended">Recommended</span>
+          <h3 data-i18n="install.setup.title">Installer</h3>
+          <p data-i18n="install.setup.text">Adds Shift to the Start menu and to Settings › Apps, without needing administrator rights.</p>
+          <a class="btn btn-main" href="https://github.com/Ambulant-biv/Shift/releases/latest/download/ShiftSetup.exe" data-i18n="install.setup.button">Download installer</a>
+        </div>
+        <div class="way">
+          <span class="tag">&nbsp;</span>
+          <h3>winget</h3>
+          <p data-i18n="install.winget.text">For people who like the command line. Open Terminal and run:</p>
+          <div class="cmd"><code>winget install AmbulantBiv.Shift</code><button type="button" class="copy" data-i18n="copy">Copy</button></div>
+        </div>
+        <div class="way">
+          <span class="tag">&nbsp;</span>
+          <h3 data-i18n="install.portable.title">Portable</h3>
+          <p data-i18n="install.portable.text">One file and no installation. Handy on a USB stick or a computer you don’t own.</p>
+          <a href="https://github.com/Ambulant-biv/Shift/releases/latest/download/Shift.exe" data-i18n="install.portable.button">Download Shift.exe</a>
+        </div>
+      </div>
+      <div class="warning">
+        <strong data-i18n="install.warn.title">Seeing “Windows protected your PC”?</strong>
+        <span data-i18n="install.warn.text">Windows shows this for new programs that are not code-signed yet. Click “More info”, then “Run anyway”. You only need to do this once.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2 data-i18n="faq.title">Questions</h2>
+      <details><summary data-i18n="faq.free.q">Is Shift really free?</summary><p data-i18n="faq.free.a">Yes. Shift is open source under the AGPL-3.0 licence. There are no ads, no account and no paid version.</p></details>
+      <details><summary data-i18n="faq.office.q">Do I need Microsoft Office?</summary><p data-i18n="faq.office.a">Only for converting Word, Excel and PowerPoint files. LibreOffice works too. Images, PDFs, drawings, video and audio need nothing extra.</p></details>
+      <details><summary data-i18n="faq.lang.q">Which languages does Shift speak?</summary><p data-i18n="faq.lang.a">English, Dutch and German. Shift follows the language of Windows, and you can change it in Settings.</p></details>
+      <details><summary data-i18n="faq.mac.q">Is there a version for Mac or Linux?</summary><p data-i18n="faq.mac.a">Not yet. Shift is made for Windows 10 and 11.</p></details>
+      <details><summary data-i18n="faq.remove.q">How do I uninstall Shift?</summary><p data-i18n="faq.remove.a">Go to Settings › Apps › Installed apps, find Shift and choose Uninstall. With winget: winget uninstall AmbulantBiv.Shift.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span data-i18n="footer.made">Shift is open source. Made with PyMuPDF, LibreDWG, ezdxf, FFmpeg and CustomTkinter.</span>
+    <span><a href="https://github.com/Ambulant-biv/Shift" data-i18n="footer.source">Source code</a> &nbsp; <a href="https://github.com/Ambulant-biv/Shift/releases" data-i18n="footer.releases">All releases</a> &nbsp; <a href="https://github.com/Ambulant-biv/Shift/issues" data-i18n="footer.issues">Report a problem</a></span>
+  </div>
+</footer>
+
+<script>
+const NL = {
+  "nav.formats": "Wat het omzet", "nav.drawings": "Tekeningen", "nav.privacy": "Privacy", "nav.install": "Installeren",
+  "hero.title": "Zet elk bestand om. Houd het op je eigen computer.",
+  "hero.lead": "Shift zet foto’s, PDF’s, Word-, Excel- en PowerPoint-bestanden, tekeningen, video en audio om naar het formaat dat je nodig hebt. Alles gebeurt op je eigen Windows-pc; er wordt niets geüpload.",
+  "hero.download": "Download voor Windows", "copy": "Kopiëren", "copied": "Gekopieerd",
+  "hero.free": "Gratis en open source, voor Windows 10 en 11.",
+  "hero.alt": "Het venster van Shift in donker en licht thema, terwijl het twee foto’s, een PDF en een Word-bestand samenvoegt tot één PDF.",
+  "formats.title": "Wat Shift omzet",
+  "formats.intro": "Voeg bestanden of een hele map toe, kies het formaat dat je wilt, en Shift doet de rest. Je originelen worden nooit gewijzigd of overschreven.",
+  "formats.kind": "Soort", "formats.from": "Van", "formats.to": "Naar",
+  "kind.images": "Afbeeldingen", "kind.documents": "Documenten", "kind.spreadsheets": "Rekenbladen", "kind.presentations": "Presentaties",
+  "to.images": "PDF of elk ander afbeeldingsformaat, verkleind of gecomprimeerd tot een maximale bestandsgrootte",
+  "to.pdf": "Word, JPG, PNG, TIFF, tekst, DXF, DWG, of een kleinere PDF",
+  "to.documents": "PDF, Word, RTF, ODT, platte tekst, webpagina",
+  "to.presentations": "PDF, PowerPoint, ODP, of één afbeelding per dia",
+  "to.video": "MP4, MOV, MKV, WebM, AVI, GIF, of alleen het geluid als MP3 of WAV",
+  "formats.note": "Word-, Excel- en PowerPoint-bestanden worden omgezet met Microsoft Office, of met LibreOffice als je dat hebt. Al het andere werkt zonder extra software.",
+  "cad.title": "PDF-tekeningen terug naar CAD",
+  "cad.text": "Een plattegrond als PDF gekregen? Shift maakt er een DXF of DWG van op de schaal die je kiest, van 1:1 tot 1:1000. Lijnen, vlakken en tekst krijgen elk een eigen laag, zodat je verder kunt in AutoCAD, BricsCAD of DraftSight.",
+  "cad.note": "Werkt bij PDF’s uit een tekenprogramma. Een gescande tekening is alleen een plaatje, dus daar zitten geen lijnen in om om te zetten.",
+  "cad.alt": "Een plattegrond als PDF links en dezelfde plattegrond als DWG van Shift rechts.",
+  "cad.caption": "Links de PDF. Rechts de DWG die Shift ervan maakte.",
+  "pdf.title": "Het PDF-gereedschap dat je anders online zoekt",
+  "pdf.merge": "Voeg foto’s, PDF’s en documenten samen tot één PDF, in de volgorde die jij kiest.",
+  "pdf.split": "Splits in losse pagina’s, per paar pagina’s, of in de bereiken die je intypt.",
+  "pdf.rotate": "Draai alle pagina’s, of alleen de pagina’s die op hun kop staan.",
+  "pdf.extract": "Houd de pagina’s die je nodig hebt, of verwijder de pagina’s die je niet wilt.",
+  "pdf.compress": "Verklein voor e-mail: een inspectierapport van 5,3 MB werd 483 KB in onze test.",
+  "pdf.alt": "Shift splitst twee PDF’s in paginabereiken.",
+  "privacy.title": "Je bestanden verlaten je computer nooit.",
+  "privacy.offline": "Shift werkt offline. Er is geen account en er wordt niets geüpload.",
+  "privacy.updates": "Het enige wat Shift aan internet vraagt, is of er een nieuwe versie is, één keer per dag. Dat kun je uitzetten in de instellingen.",
+  "privacy.open": "De broncode is openbaar, dus iedereen kan nagaan wat Shift doet.",
+  "install.title": "Shift installeren",
+  "install.intro": "Kies de manier die bij je past. Alle drie geven je dezelfde app, en Shift houdt zichzelf up-to-date.",
+  "install.recommended": "Aanbevolen", "install.setup.title": "Installatieprogramma",
+  "install.setup.text": "Zet Shift in het Startmenu en bij Instellingen › Apps, zonder dat je beheerdersrechten nodig hebt.",
+  "install.setup.button": "Installatieprogramma downloaden",
+  "install.winget.text": "Voor wie graag de opdrachtregel gebruikt. Open Terminal en typ:",
+  "install.portable.title": "Los programma",
+  "install.portable.text": "Eén bestand, zonder installatie. Handig op een USB-stick of een computer die niet van jou is.",
+  "install.portable.button": "Shift.exe downloaden",
+  "install.warn.title": "Zie je “Windows heeft uw pc beschermd”?",
+  "install.warn.text": "Windows toont dit bij nieuwe programma’s die nog niet digitaal ondertekend zijn. Klik op “Meer info” en daarna op “Toch uitvoeren”. Dat hoeft maar één keer.",
+  "faq.title": "Vragen",
+  "faq.free.q": "Is Shift echt gratis?", "faq.free.a": "Ja. Shift is open source onder de AGPL-3.0-licentie. Er zijn geen advertenties, geen account en geen betaalde versie.",
+  "faq.office.q": "Heb ik Microsoft Office nodig?", "faq.office.a": "Alleen voor het omzetten van Word-, Excel- en PowerPoint-bestanden. LibreOffice werkt ook. Afbeeldingen, PDF’s, tekeningen, video en audio hebben niets extra nodig.",
+  "faq.lang.q": "Welke talen spreekt Shift?", "faq.lang.a": "Engels, Nederlands en Duits. Shift volgt de taal van Windows, en je kunt het wijzigen in de instellingen.",
+  "faq.mac.q": "Is er een versie voor Mac of Linux?", "faq.mac.a": "Nog niet. Shift is gemaakt voor Windows 10 en 11.",
+  "faq.remove.q": "Hoe verwijder ik Shift?", "faq.remove.a": "Ga naar Instellingen › Apps › Geïnstalleerde apps, zoek Shift en kies Verwijderen. Met winget: winget uninstall AmbulantBiv.Shift.",
+  "footer.made": "Shift is open source. Gemaakt met PyMuPDF, LibreDWG, ezdxf, FFmpeg en CustomTkinter.",
+  "footer.source": "Broncode", "footer.releases": "Alle versies", "footer.issues": "Probleem melden",
+  "version": "Versie"
+};
+const EN = {};
+document.querySelectorAll("[data-i18n]").forEach(el => EN[el.dataset.i18n] = el.textContent);
+document.querySelectorAll("[data-i18n-alt]").forEach(el => EN[el.dataset.i18nAlt] = el.alt);
+document.querySelectorAll("[data-i18n-label]").forEach(el => EN[el.dataset.i18nLabel] = el.getAttribute("aria-label"));
+EN.copied = "Copied"; EN.version = "Version";
+
+let current = "en";
+function setLang(lang) {
+  current = lang;
+  const dict = lang === "nl" ? NL : EN;
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => { if (dict[el.dataset.i18n]) el.textContent = dict[el.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-alt]").forEach(el => { if (dict[el.dataset.i18nAlt]) el.alt = dict[el.dataset.i18nAlt]; });
+  document.querySelectorAll("[data-i18n-label]").forEach(el => { if (dict[el.dataset.i18nLabel]) el.setAttribute("aria-label", dict[el.dataset.i18nLabel]); });
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  document.title = lang === "nl" ? "Shift – zet elk bestand om op je eigen computer" : "Shift – convert any file on your own computer";
+  showVersion();
+  try { localStorage.setItem("shift-lang", lang); } catch (e) {}
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  const text = btn.previousElementSibling.textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { return; }
+  const dict = current === "nl" ? NL : EN;
+  btn.textContent = dict.copied;
+  setTimeout(() => { btn.textContent = dict.copy; }, 1800);
+}));
+
+let latest = null;
+function showVersion() {
+  if (latest) document.getElementById("version").textContent = `${(current === "nl" ? NL : EN).version} ${latest}.`;
+}
+fetch("https://api.github.com/repos/Ambulant-biv/Shift/releases/latest")
+  .then(r => r.ok ? r.json() : null)
+  .then(d => { if (d && d.tag_name) { latest = d.tag_name.replace(/^v/i, ""); showVersion(); } })
+  .catch(() => {});
+
+let saved = null;
+try { saved = localStorage.getItem("shift-lang"); } catch (e) {}
+setLang(saved || ((navigator.language || "").toLowerCase().startsWith("nl") ? "nl" : "en"));
+</script>
+</body>
+</html>
