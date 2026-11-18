@@ -1,5 +1,5 @@
-# Builds Shift.exe on Windows and publishes it as a GitHub Release.
-# Trigger: push a tag that matches version.py, e.g.  git tag v1.1.0 && git push --tags
+# Builds Shift.exe and ShiftSetup.exe on Windows and publishes them as a GitHub Release.
+# Trigger: create a release (or push a tag) that matches version.py, e.g. v1.4.0.
 name: Release
 
 on:
@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +22,7 @@ jobs:
           python-version: "3.12"
 
       - name: Check that the tag matches version.py
+        id: version
         shell: pwsh
         run: |
           $version = python -c "from version import __version__; print(__version__)"
@@ -27,23 +30,51 @@ jobs:
             Write-Error "Tag ${{ github.ref_name }} does not match version.py ($version)"
             exit 1
           }
+          "number=$version" >> $env:GITHUB_OUTPUT
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt pyinstaller
 
+      - name: Get LibreDWG (for DWG export)
+        shell: pwsh
+        run: ./get_libredwg.ps1
+
       - name: Build Shift.exe
         run: python -m PyInstaller shift.spec --noconfirm --clean
 
-      - name: Create checksum
+      - name: Build ShiftSetup.exe
         shell: pwsh
         run: |
-          $hash = (Get-FileHash dist/Shift.exe -Algorithm SHA256).Hash.ToLower()
-          "$hash  Shift.exe" | Out-File -Encoding ascii dist/Shift.exe.sha256
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          & $iscc "/DAppVersion=${{ steps.version.outputs.number }}" installer\shift.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          foreach ($name in "Shift.exe", "ShiftSetup.exe") {
+            $hash = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLower()
+            "$hash  $name" | Out-File -Encoding ascii "dist/$name.sha256"
+          }
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/ShiftSetup.exe
+            dist/ShiftSetup.exe.sha256
             dist/Shift.exe
             dist/Shift.exe.sha256
           generate_release_notes: true
+
+      # Only runs once the WINGET_TOKEN secret exists (after the first winget submission was accepted).
+      - name: Update the winget package
+        if: ${{ env.WINGET_TOKEN != '' }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update AmbulantBiv.Shift `
+            --version ${{ steps.version.outputs.number }} `
+            --urls "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftSetup.exe" `
+            --submit --token $env:WINGET_TOKEN
